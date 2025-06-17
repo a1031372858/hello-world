@@ -3,6 +3,7 @@ package org.example.controller;
 import cn.hutool.core.collection.CollectionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.util.RedisUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("redis/string")
 public class RedisStringController {
     private final RedisTemplate<String,String> redisTemplate;
+
+    private final RedisUtils redisUtils;
 
     /**
      * 根据key获取值
@@ -210,9 +213,8 @@ public class RedisStringController {
      * @return
      */
     @GetMapping("/getLock/{key}")
-    public String getLock(@PathVariable String key,Integer timeout){
-        Boolean result = redisTemplate.opsForValue().setIfAbsent(key, "1", timeout, TimeUnit.SECONDS);
-        return Boolean.TRUE.equals(result)?result.toString():"false";
+    public String getLock(@PathVariable String key,String value,Long timeout){
+        return String.valueOf(redisUtils.lock(key,value,timeout,TimeUnit.SECONDS));
     }
 
     /**
@@ -221,8 +223,7 @@ public class RedisStringController {
      * @return
      */
     @GetMapping("/unlock/{key}")
-    public String unlock(@PathVariable String key){
-        Boolean result = redisTemplate.delete(key);
-        return Boolean.TRUE.equals(result) ? result.toString() : "false";
+    public String unlock(@PathVariable String key,String value){
+        return String.valueOf(redisUtils.unlock(key,value));
     }
 }
