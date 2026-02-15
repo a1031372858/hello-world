@@ -16,4 +16,12 @@ public class UserTO {
     private String mobile;
 
     private Date birthday;
+
+    private Date createdAt;
+
+    private String createdBy;
+
+    private Date updatedAt;
+
+    private String updatedBy;
 }
