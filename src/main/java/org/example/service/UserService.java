@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.converter.UserConverter;
-import org.example.mapper.UserMapper;
+import org.example.mapper.xycmall.UserMapper;
 import org.example.model.request.IdRequest;
 import org.example.model.po.UserPO;
 import org.example.model.to.UserTO;

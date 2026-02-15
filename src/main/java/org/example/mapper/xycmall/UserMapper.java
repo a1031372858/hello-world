@@ -1,4 +1,4 @@
-package org.example.mapper;
+package org.example.mapper.xycmall;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
