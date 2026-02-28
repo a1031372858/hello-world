@@ -1,8 +1,6 @@
 package org.example.util;
 
-import lombok.RequiredArgsConstructor;
 import okhttp3.*;
-import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +9,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * OKHttp工具类，用于发送HTTP请求
+ * 支持GET、POST（JSON、Form、文件）请求，并可设置请求头
  * @author xuyachang
  * @date 2024/2/26
  */
@@ -30,12 +30,55 @@ public class OKHttpUtil {
         return client;
     }
 
-    public static String get(String url,Map<String,String> param){
-
-        HttpUrl builderUrl = HttpUrl.parse(url);
-        if(Objects.isNull(builderUrl)){
-            throw new NullPointerException("url不合法");
+    /**
+     * 构建请求头
+     * @param header 请求头参数
+     * @return 构建后的Headers对象
+     */
+    private static Headers buildHeaders(Map<String, String> header) {
+        Headers.Builder headerBuilder = new Headers.Builder();
+        if (Objects.nonNull(header)) {
+            header.forEach(headerBuilder::add);
         }
+        return headerBuilder.build();
+    }
+
+    /**
+     * 检查URL是否合法
+     * @param url URL字符串
+     * @return 解析后的HttpUrl对象
+     * @throws IllegalArgumentException 如果URL不合法
+     */
+    private static HttpUrl checkUrl(String url) {
+        HttpUrl builderUrl = HttpUrl.parse(url);
+        if (Objects.isNull(builderUrl)) {
+            throw new IllegalArgumentException("url不合法");
+        }
+        return builderUrl;
+    }
+
+    /**
+     * get请求，指定url，入参
+     * @param url 请求URL
+     * @param param 请求参数
+     * @return 响应结果
+     */
+    public static String get(String url,Map<String,String> param) {
+        return get(url,param,null);
+    }
+
+    /**
+     * get请求，指定url，入参，请求头
+     * @param url 请求URL
+     * @param param 请求参数
+     * @param header 请求头
+     * @return 响应结果
+     */
+    public static String get(String url,Map<String,String> param,Map<String,String> header) {
+
+        HttpUrl builderUrl = checkUrl(url);
+        Headers headers = buildHeaders(header);
+
         HttpUrl.Builder urlBuilder = builderUrl.newBuilder();
         if(Objects.nonNull(param)){
             param.forEach(urlBuilder::addQueryParameter);
@@ -44,6 +87,7 @@ public class OKHttpUtil {
         //构建请求
         Request request = new Request.Builder()
                 .get()
+                .headers(headers)
                 .url(httpUrl)
                 .build();
 
@@ -51,23 +95,74 @@ public class OKHttpUtil {
         return executeRequest(request);
     }
 
-    public static String postJson(String url,String json){
+    /**
+     * post请求，指定url，json入参
+     * @param url 请求URL
+     * @param json JSON格式的请求体
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或JSON为空
+     */
+    public static String postJson(String url,String json) {
+        return postJson(url, json, null);
+    }
+
+    /**
+     * post请求，指定url，json入参，请求头
+     * @param url 请求URL
+     * @param json JSON格式的请求体
+     * @param header 请求头
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或JSON为空
+     */
+    public static String postJson(String url,String json,Map<String,String> header) {
+        if (Objects.isNull(json) || json.isEmpty()) {
+            throw new IllegalArgumentException("json参数不能为空");
+        }
+        checkUrl(url);
         RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"),json);
+        Headers headers = buildHeaders(header);
 
         Request request = new Request.Builder()
                 .post(body)
+                .headers(headers)
                 .url(url)
                 .build();
 
         return executeRequest(request);
     }
 
-    public static String postFrom(String url,Map<String,String> param){
+    /**
+     * post请求，指定url，form入参
+     * @param url 请求URL
+     * @param param Form表单参数
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或参数为空
+     */
+    public static String postFrom(String url,Map<String,String> param) {
+        return postFrom(url, param, null);
+    }
+
+    /**
+     * post请求，指定url，form入参，请求头
+     * @param url 请求URL
+     * @param param Form表单参数
+     * @param header 请求头
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或参数为空
+     */
+    public static String postFrom(String url,Map<String,String> param,Map<String,String> header) {
+        if (Objects.isNull(param)) {
+            throw new IllegalArgumentException("param参数不能为空");
+        }
+        checkUrl(url);
         FormBody.Builder formBuilder = new FormBody.Builder();
         param.forEach(formBuilder::add);
         RequestBody formBody = formBuilder.build();
+        Headers headers = buildHeaders(header);
+
         Request request = new Request.Builder()
                 .url(url)
+                .headers(headers)
                 .post(formBody)
                 .build();
 
@@ -75,141 +170,71 @@ public class OKHttpUtil {
         return executeRequest(request);
     }
 
-    public static String postFile(String url,String fileUrl){
+    /**
+     * post请求，指定url，文件入参
+     * @param url 请求URL
+     * @param fileUrl 文件路径
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或文件路径为空
+     */
+    public static String postFile(String url,String fileUrl) {
+        return postFile(url, fileUrl, null);
+    }
+
+    /**
+     * post请求，指定url，文件入参，请求头
+     * @param url 请求URL
+     * @param fileUrl 文件路径
+     * @param header 请求头
+     * @return 响应结果
+     * @throws IllegalArgumentException 如果URL或文件路径为空
+     */
+    public static String postFile(String url,String fileUrl,Map<String,String> header) {
+        if (Objects.isNull(fileUrl) || fileUrl.isEmpty()) {
+            throw new IllegalArgumentException("fileUrl参数不能为空");
+        }
+        checkUrl(url);
         File file = new File(fileUrl);
+        if (!file.exists() || !file.isFile()) {
+            System.err.println("文件不存在或不是普通文件: " + fileUrl);
+            return "文件不存在或不是普通文件: " + fileUrl;
+        }
+        if (!file.canRead()) {
+            System.err.println("文件不可读: " + fileUrl);
+            return "文件不可读: " + fileUrl;
+        }
+        Headers headers = buildHeaders(header);
+
         Request request = new Request.Builder()
                 .url(url)
+                .headers(headers)
                 .post(RequestBody.create(MediaType.parse("text/x-markdown; charset=utf-8"), file))
                 .build();
 
         return executeRequest(request);
     }
 
-    private static String executeRequest(Request request){
+    private static String executeRequest(Request request) {
         //执行请求
         try (Response response = client.newCall(request).execute()){
             //返回响应
             return handleResponse(response);
         } catch (IOException e) {
             e.printStackTrace();
-            return e.getMessage();
+            return "请求失败: " + e.getMessage();
         }
     }
 
-    private static String handleResponse(Response response) throws IOException {
-        if(response.isSuccessful() && 200 == response.code()){
-            return response.body().string();
-        }else{
-            return response.message();
-        }
-    }
-
-    public static void getDemo(){
-        //创建okhttp客户端
-        //在实际项目中，应该复用OkHttpClient，做成配置类交给spring容器管理
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                //连接失败时是否重试
-                .retryOnConnectionFailure(false)
-                //连接池
-                .connectionPool(new ConnectionPool(200, 5, TimeUnit.MINUTES))
-                //连接超时
-                .connectTimeout(30, TimeUnit.SECONDS)
-                //读超时
-                .readTimeout(30, TimeUnit.SECONDS)
-                //写超时
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build();
-
-        //构建url
-        HttpUrl httpUrl = HttpUrl.parse("http://localhost:8080/hello");
-        HttpUrl.Builder builder = httpUrl.newBuilder();
-        builder.addQueryParameter("param1", "value");
-        httpUrl = builder.build();
-
-//        HttpUrl httpUrl = new HttpUrl.Builder()
-//                //通信协议
-//                .scheme("http")
-//                //域名
-//                .host("localhost")
-//                //路径
-//                .addPathSegment("hello")
-//                //请求参数
-//                .addQueryParameter("param1", "value")
-//                //端口号
-//                .port(8080)
-//                .build();
-
-        //构建请求
-        Request request = new Request.Builder()
-                //GET请求方式
-                .get()
-                //HttpUrl或url字符串
-                .url(httpUrl)
-                .build();
-
-        //创建一个通话
-        Call call = okHttpClient.newCall(request);
-        //执行请求，结束时关闭连接
-        try (Response response = call.execute()) {
-            //返回响应
-            if (response.isSuccessful() && 200 == response.code()) {
-                //将响应体转化成字符串
-                System.out.println(response.body().string());
-            } else {
-                //失败时返回失败信息
-                System.out.println(response.message());
+    private static String handleResponse(Response response) {
+        try {
+            if(response.isSuccessful()){
+                return response.body().string();
+            }else{
+                return "请求失败，状态码: " + response.code() + ", 消息: " + response.message();
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println(e.getMessage());
-        }
-    }
-
-
-    public static void postDemo(){
-
-        //创建okhttp客户端
-        //在实际项目中，应该复用OkHttpClient，做成配置类交给spring容器管理
-        OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
-                //连接失败时是否重试
-                .retryOnConnectionFailure(false)
-                //连接池
-                .connectionPool(new ConnectionPool(200, 5, TimeUnit.MINUTES))
-                //连接超时
-                .connectTimeout(30, TimeUnit.SECONDS)
-                //读超时
-                .readTimeout(30, TimeUnit.SECONDS)
-                //写超时
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build();
-
-        String json = "{\"param\":\"value\"}";
-        //构建url
-        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"),json);
-
-        //构建请求
-        Request request = new Request.Builder()
-                //POST请求方式
-                .post(body)
-                //HttpUrl或url字符串
-                .url("http://localhost:8080/hello")
-                .build();
-
-        //创建一个通话
-        Call call = okHttpClient.newCall(request);
-        //执行请求，结束时关闭连接
-        try (Response response = call.execute()) {
-            //返回响应
-            if (response.isSuccessful() && 200 == response.code()) {
-                //将响应体转化成字符串
-                System.out.println(response.body().string());
-            } else {
-                //失败时返回失败信息
-                System.out.println(response.message());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
+            return "处理响应失败: " + e.getMessage();
         }
     }
 }
