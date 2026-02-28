@@ -1,15 +1,14 @@
 package org.example.service.impl;
 
-import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import org.example.converter.UserConverter;
 import org.example.http_service.UserApiService;
 import org.example.model.po.UserPO;
 import org.example.model.to.UserTO;
 import org.example.service.UserService;
+import org.example.util.OKHttpUtil;
 import org.springframework.stereotype.Service;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -26,7 +25,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final OkHttpClient client;
     private final UserConverter userConverter;
 
     public UserTO userInfo(){
@@ -45,7 +43,7 @@ public class UserServiceImpl implements UserService {
         Retrofit retrofit = new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl("http://localhost:8082/")
-                .client(client)
+                .client(OKHttpUtil.getClient())
                 .build();
 
         UserApiService userApiService = retrofit.create(UserApiService.class);
@@ -71,7 +69,7 @@ public class UserServiceImpl implements UserService {
         Retrofit retrofit = new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl("http://localhost:8082/")
-                .client(client)
+                .client(OKHttpUtil.getClient())
                 .build();
 
         UserApiService userApiService = retrofit.create(UserApiService.class);
