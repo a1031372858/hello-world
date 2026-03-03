@@ -8,6 +8,7 @@ import org.example.model.po.UserPO;
 import org.example.model.request.UserPageRequest;
 import org.example.model.to.UserTO;
 import org.example.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,5 +42,29 @@ public class HelloController {
         page.setCurrent(request.getPageNum());
         page.setSize(request.getSize());
         return userService.selectPage(page);
+    }
+
+    @GetMapping("user/update")
+    public Boolean updateUser(UserTO userTO){
+        UserPO userPO = new UserPO();
+        BeanUtils.copyProperties(userTO,userPO);
+        Boolean result = userService.updateUser(userPO);
+        return result;
+    }
+
+    @GetMapping("user/update2")
+    public Boolean updateUser2(UserTO userTO){
+        UserPO userPO = new UserPO();
+        BeanUtils.copyProperties(userTO,userPO);
+        Boolean result = userService.updateUserByTransactionManager(userPO);
+        return result;
+    }
+
+    @GetMapping("user/update3")
+    public Boolean updateUser3(UserTO userTO){
+        UserPO userPO = new UserPO();
+        BeanUtils.copyProperties(userTO,userPO);
+        Boolean result = userService.updateUserByTransactionTemplate(userPO);
+        return result;
     }
 }
