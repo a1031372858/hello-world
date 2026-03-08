@@ -18,7 +18,9 @@ public class TransactionConfig {
 
     @Bean
     public TransactionTemplate transactionTemplate(DataSource dataSource){
-        TransactionTemplate template = new TransactionTemplate(new DataSourceTransactionManager(dataSource));
+        //使用指定数据源的方式来控制事务
+        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager(dataSource);
+        TransactionTemplate template = new TransactionTemplate(dataSourceTransactionManager);
         // 设置默认的事务传播行为
         template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         // 设置默认的事务隔离级别

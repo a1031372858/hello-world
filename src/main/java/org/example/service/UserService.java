@@ -13,7 +13,10 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
@@ -104,6 +107,7 @@ public class UserService {
         if(Objects.nonNull(user.getBirthday())){
             updatePO.setBirthday(user.getBirthday());
         }
+        //开启事务
         TransactionStatus transaction = dataSourceTransactionManager.getTransaction(transactionDefinition);
         int i = userMapper.updateById(updatePO);
         if(i>0){
@@ -140,4 +144,5 @@ public class UserService {
         });
         return true;
     }
+
 }
