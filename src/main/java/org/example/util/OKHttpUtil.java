@@ -18,7 +18,7 @@ public class OKHttpUtil {
 
     private static final OkHttpClient client = new OkHttpClient().newBuilder()
             .retryOnConnectionFailure(false)
-            .connectionPool(new ConnectionPool(200, 5, TimeUnit.MINUTES))
+            .connectionPool(new ConnectionPool(5, 5, TimeUnit.MINUTES))
             .connectTimeout(30,TimeUnit.SECONDS)
             .readTimeout(30,TimeUnit.SECONDS)
             .writeTimeout(30,TimeUnit.SECONDS)
@@ -208,7 +208,7 @@ public class OKHttpUtil {
         Request request = new Request.Builder()
                 .url(url)
                 .headers(headers)
-                .post(RequestBody.create(MediaType.parse("text/x-markdown; charset=utf-8"), file))
+                .post(RequestBody.create(MediaType.parse("application/octet-stream"), file))
                 .build();
 
         return executeRequest(request);
@@ -227,14 +227,20 @@ public class OKHttpUtil {
 
     private static String handleResponse(Response response) {
         try {
-            if(response.isSuccessful()){
-                return response.body().string();
-            }else{
+            if (response.isSuccessful()) {
+                ResponseBody body = response.body();
+                return body != null ? body.string() : "响应体为空";
+            } else {
                 return "请求失败，状态码: " + response.code() + ", 消息: " + response.message();
             }
         } catch (IOException e) {
             e.printStackTrace();
             return "处理响应失败: " + e.getMessage();
+        } finally {
+            // 确保响应被关闭，防止资源泄露
+            if (response != null) {
+                response.close();
+            }
         }
     }
 }
